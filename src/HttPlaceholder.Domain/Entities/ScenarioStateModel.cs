@@ -1,4 +1,6 @@
-﻿namespace HttPlaceholder.Domain.Entities;
+﻿using Newtonsoft.Json;
+
+namespace HttPlaceholder.Domain.Entities;
 
 /// <summary>
 ///     Represents the state of a specific scenario.
@@ -35,4 +37,7 @@ public class ScenarioStateModel
     ///     Gets or sets the number of times the scenario has been hit.
     /// </summary>
     public int HitCount { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString() => JsonConvert.SerializeObject(this);
 }

@@ -4,6 +4,7 @@ using HttPlaceholder.Application.Infrastructure.DependencyInjection;
 using HttPlaceholder.Application.Interfaces.Authentication;
 using HttPlaceholder.Common.Utilities;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HttPlaceholder.Authorization.Implementations;
@@ -14,13 +15,15 @@ internal class LoginService : ILoginService, ITransientService
     private const string Salt = "83b2737f-7d85-4a0a-8113-b98ed4a255a1";
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IOptionsMonitor<SettingsModel> _options;
+    private readonly ILogger<LoginService> _logger;
 
     public LoginService(
         IHttpContextAccessor httpContextAccessor,
-        IOptionsMonitor<SettingsModel> options)
+        IOptionsMonitor<SettingsModel> options, ILogger<LoginService> logger)
     {
         _httpContextAccessor = httpContextAccessor;
         _options = options;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -31,13 +34,16 @@ internal class LoginService : ILoginService, ITransientService
         var password = settings.Authentication?.ApiPassword ?? string.Empty;
         if (string.IsNullOrWhiteSpace(username) && string.IsNullOrWhiteSpace(password))
         {
+            _logger.LogDebug("No username and password set, so returning true.");
             return true;
         }
 
         var expectedHash = CreateHash(username, password);
         var cookie =
             _httpContextAccessor.HttpContext.Request.Cookies.FirstOrDefault(c => c.Key == LoginCookieKey);
-        return cookie.Value == expectedHash;
+        var result = cookie.Value == expectedHash;
+        _logger.LogDebug("Result of login: {}.", result);
+        return result;
     }
 
     /// <inheritdoc />

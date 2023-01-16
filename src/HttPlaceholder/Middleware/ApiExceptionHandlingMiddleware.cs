@@ -6,6 +6,7 @@ using HttPlaceholder.Application.Exceptions;
 using HttPlaceholder.Application.Interfaces.Http;
 using HttPlaceholder.Domain;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace HttPlaceholder.Middleware;
@@ -17,16 +18,17 @@ public class ApiExceptionHandlingMiddleware
 {
     private readonly IHttpContextService _httpContextService;
     private readonly RequestDelegate _next;
+    private readonly ILogger<ApiExceptionHandlingMiddleware> _logger;
 
     /// <summary>
     ///     Constructs an <see cref="ApiExceptionHandlingMiddleware" /> instance.
     /// </summary>
-    /// <param name="next"></param>
-    /// <param name="httpContextService"></param>
-    public ApiExceptionHandlingMiddleware(RequestDelegate next, IHttpContextService httpContextService)
+    public ApiExceptionHandlingMiddleware(RequestDelegate next, IHttpContextService httpContextService,
+        ILogger<ApiExceptionHandlingMiddleware> logger)
     {
         _next = next;
         _httpContextService = httpContextService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -43,22 +45,27 @@ public class ApiExceptionHandlingMiddleware
             }
             catch (ConflictException)
             {
+                _logger.LogDebug($"Handling {nameof(ConflictException)}.");
                 _httpContextService.SetStatusCode(HttpStatusCode.Conflict);
             }
             catch (NotFoundException)
             {
+                _logger.LogDebug($"Handling {nameof(NotFoundException)}.");
                 _httpContextService.SetStatusCode(HttpStatusCode.NotFound);
             }
             catch (ForbiddenException)
             {
+                _logger.LogDebug($"Handling {nameof(ForbiddenException)}.");
                 _httpContextService.SetStatusCode(HttpStatusCode.Forbidden);
             }
             catch (ArgumentException ex)
             {
+                _logger.LogDebug($"Handling {nameof(ArgumentException)}.");
                 await WriteResponseBody(new[] {ex.Message}, HttpStatusCode.BadRequest, cancellationToken);
             }
             catch (ValidationException ex)
             {
+                _logger.LogDebug($"Handling {nameof(ValidationException)}.");
                 await WriteResponseBody(ex.ValidationErrors, HttpStatusCode.BadRequest, cancellationToken);
             }
         }
@@ -73,6 +80,8 @@ public class ApiExceptionHandlingMiddleware
     {
         _httpContextService.SetStatusCode(httpStatusCode);
         _httpContextService.AddHeader(HeaderKeys.ContentType, MimeTypes.JsonMime);
-        await _httpContextService.WriteAsync(JsonConvert.SerializeObject(body), cancellationToken);
+        var responseJson = JsonConvert.SerializeObject(body);
+        await _httpContextService.WriteAsync(responseJson, cancellationToken);
+        _logger.LogDebug($"Returning response body: {responseJson}");
     }
 }

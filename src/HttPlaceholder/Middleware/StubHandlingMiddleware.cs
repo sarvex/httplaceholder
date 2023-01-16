@@ -71,6 +71,7 @@ public class StubHandlingMiddleware
         var settings = _options.CurrentValue;
         if (settings?.Stub?.HealthcheckOnRootUrl == true && path == "/")
         {
+            _logger.LogDebug("Performing health check.");
             _httpContextService.SetStatusCode(HttpStatusCode.OK);
             await _httpContextService.WriteAsync("OK", cancellationToken);
             return;
@@ -78,6 +79,7 @@ public class StubHandlingMiddleware
 
         if (_segmentsToIgnore.Any(s => path.Contains(s, StringComparison.OrdinalIgnoreCase)))
         {
+            _logger.LogDebug($"Segment {path} will not be handled by the {nameof(StubHandlingMiddleware)}.");
             await _next(context);
             return;
         }
@@ -89,6 +91,7 @@ public class StubHandlingMiddleware
         try
         {
             response = await HandleRequest(correlationId, cancellationToken);
+            _logger.LogDebug("Request handled successfully.");
         }
         catch (RequestValidationException e)
         {
@@ -154,6 +157,7 @@ public class StubHandlingMiddleware
         var response = await _stubRequestExecutor.ExecuteRequestAsync(cancellationToken);
         if (response.AbortConnection)
         {
+            _logger.LogDebug("Request will be aborted.");
             _httpContextService.AbortConnection();
             return response;
         }

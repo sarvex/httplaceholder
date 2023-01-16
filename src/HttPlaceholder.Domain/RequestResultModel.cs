@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace HttPlaceholder.Domain;
 
@@ -53,4 +54,7 @@ public class RequestResultModel
     ///     Gets or sets whether a response is saved for this request.
     /// </summary>
     public bool HasResponse { get; set; }
+
+    /// <inheritdoc />
+    public override string ToString() => JsonConvert.SerializeObject(this);
 }
