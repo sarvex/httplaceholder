@@ -19,10 +19,8 @@ changelog_path = os.path.join(dir_path, '..', '..', 'CHANGELOG')
 changelog_path_copy_path = os.path.join(mkdocs_docs_path, 'CHANGELOG')
 shutil.copyfile(changelog_path, changelog_path_copy_path)
 
-# Remove table of contents from copied file.
-docs_md_file_read = open(docs_md_copy_path)
-lines = docs_md_file_read.readlines()
-docs_md_file_read.close()
+with open(docs_md_copy_path) as docs_md_file_read:
+    lines = docs_md_file_read.readlines()
 lines_result = []
 add_line = False
 for line in lines:
@@ -43,10 +41,8 @@ docs_md = re_replace('^### ', '#### ', docs_md)
 docs_md = re_replace('^## ', '### ', docs_md)
 docs_md = re_replace('^# ', '## ', docs_md)
 docs_md = '# HttPlaceholder documentation\n![](img/logo.png)\n\n' + docs_md
-docs_md_file_write = open(docs_md_copy_path, 'w')
-docs_md_file_write.write(docs_md)
-docs_md_file_write.close()
-
+with open(docs_md_copy_path, 'w') as docs_md_file_write:
+    docs_md_file_write.write(docs_md)
 # Copy img folder
 img_path = os.path.join(dir_path, '..', 'img')
 img_copy_path = os.path.join(mkdocs_docs_path, 'img')
